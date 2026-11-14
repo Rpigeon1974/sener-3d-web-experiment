@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENER 3D Solid Widget</title>
+    <style>html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; }</style>
+</head>
+<body>
+<div id="sener-3d-embed" style="width:100%; height:100%; min-height:420px; position:relative; overflow:hidden; background:transparent;">
+  <div style="position:absolute;left:22px;top:18px;z-index:30;font-family:Inter,Segoe UI,Arial,sans-serif;pointer-events:none;">
+    <div style="font-size:12px;letter-spacing:.17em;text-transform:uppercase;font-weight:700;color:#5870a0;">INTERACTIVE 3D WEB EXPERIMENT</div>
+    <div style="margin-top:12px;font-size:clamp(24px,3vw,40px);line-height:1.05;font-weight:700;color:#06286d;">3D graphics, directly in your browser.</div>
+    <div style="margin-top:13px;font-size:14px;color:#60718f;">Drag to rotate · Scroll or pinch to zoom · No installation required</div>
+  </div>
+  <div style="position:absolute;left:10px;bottom:24px;z-index:30;font-family:Inter,Segoe UI,Arial,sans-serif;font-size:11px;line-height:1.45;color:#60718f;background:rgba(255,255,255,.90);border:1px solid #d7dfec;border-radius:10px;padding:8px 12px;box-shadow:0 8px 25px rgba(18,44,83,.10);pointer-events:none;">Concept &amp; development by <strong style="color:#06286d;">Ricardo Pombo</strong><br>Interactive browser-based 3D experiment</div>
+  <div style="position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:30;font-family:Inter,Segoe UI,Arial,sans-serif;font-size:11px;color:#60718f;background:rgba(255,255,255,.90);border:1px solid #d7dfec;border-radius:999px;padding:8px 14px;box-shadow:0 8px 25px rgba(18,44,83,.08);pointer-events:none;">WebGL · Three.js · Real-time interaction</div>
+    <div id="sener-3d-anim-ui" style="position:absolute; top:14px; right:14px; z-index:20; display:flex; align-items:center; gap:6px; background:rgba(15,23,42,0.85); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:6px 10px; border-radius:14px; border:1px solid rgba(255,255,255,0.12); font-family:system-ui,-apple-system,sans-serif; box-shadow:0 10px 25px -5px rgba(0,0,0,0.4);">
+        <span style="font-size:11px; font-weight:600; color:#38bdf8; letter-spacing:0.02em;">Animação:</span>
+        <select id="sener-3d-anim-select" style="background:#0f172a; color:#f8fafc; font-size:12px; font-weight:500; border:1px solid #334155; border-radius:9px; padding:4px 8px; outline:none; cursor:pointer;">
+            <option value="static" >1. Estático</option>
+            <option value="bouncy" >2. Queda c/ Ressalto</option>
+            <option value="wave" >3. Onda Harmónica 2.5D</option>
+            <option value="magnetic" >4. Montagem Magnética</option>
+            <option value="domino" >5. Rotação Dominó 360°</option>
+            <option value="jelly" >6. Efeito Elástico / Gelatina</option>
+            <option value="vortex" >7. Órbita Vortex 3D</option>
+            <option value="typewriter" selected>8. Máquina de Escrever 3D</option>
+            <option value="zerog" >9. Gravidade Zero</option>
+            <option value="pulse" >10. Pulso de Energia</option>
+            <option value="origami" >11. Origami 3D</option>
+            <option value="pendulum" >12. Pêndulo Sincronizado</option>
+        </select>
+        <button id="sener-3d-anim-replay" title="Reiniciar Animação" style="background:rgba(56,189,248,0.18); color:#7dd3fc; border:1px solid rgba(56,189,248,0.35); border-radius:9px; padding:4px 9px; font-size:11px; font-weight:600; cursor:pointer;">&#x21bb;</button>
+    </div>
+</div>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
+const CFG = {"depth":24,"bevelThickness":2.8,"bevelSize":2,"curveSegments":64,"logoOffsetY":0,"baseColor":"#001E60","useSampledColors":true,"materialPreset":"acrylic","extraText":"Transforming the world by challenging boundaries","deletedCharIndices":[],"extraTextPos":"below","extraTextCurve":"circle","extraTextRadius":365,"extraTextSize":60,"extraTextSpacing":8,"extraTextOffsetY":0,"extraTextColor":"#0E455D","animMode":"typewriter","animSpeed":1,"animAmp":1,"autoCamera":false,"showAnimMenu":true};
+const ELEMENTS = [{"id":"sym_dove","order":0,"color":"#001E60","solids":[{"outer":"M 6 6 C 28 1, 47 14, 55 37 C 58 21, 71 14, 83 23 L 95 34 L 82 44 C 86 73, 76 102, 47 103 C 31 103, 19 97, 4 103 L 2 89 C 18 83, 31 89, 46 89 C 65 89, 71 67, 67 41 L 75 34 L 71 30 C 63 25, 57 33, 58 48 L 46 50 C 40 27, 25 14, 4 19 Z","holes":[]},{"outer":"M 3 24 C 23 36, 36 56, 30 76 C 28 82, 18 80, 19 73 C 23 57, 14 42, 1 34 Z","holes":[]}]},{"id":"sym_globe","order":1,"color":"#001E60","solids":[{"outer":"M 160 3 C 188 3, 210 25, 210 52 C 210 79, 188 101, 160 101 C 132 101, 110 79, 110 52 C 110 25, 132 3, 160 3 Z","holes":["M 153 15 C 136 18, 124 31, 122 46 L 145 48 C 146 34, 149 23, 153 15 Z","M 167 15 C 171 23, 174 34, 175 48 L 198 46 C 196 31, 184 18, 167 15 Z","M 156 18 C 153 26, 151 36, 151 48 L 169 48 C 169 36, 167 26, 164 18 Z","M 122 58 C 124 74, 136 86, 153 89 C 149 81, 146 70, 145 59 L 122 58 Z","M 175 59 C 174 70, 171 81, 167 89 C 184 86, 196 74, 198 58 L 175 59 Z","M 151 59 C 151 70, 153 80, 156 87 L 164 87 C 167 80, 169 70, 169 59 L 151 59 Z"]}]},{"id":"sym_flame","order":2,"color":"#001E60","solids":[{"outer":"M 47 120 C 56 136, 54 152, 63 168 C 72 184, 70 208, 50 222 C 34 205, 24 184, 29 160 C 33 143, 44 133, 47 120 Z","holes":["M 48 152 C 42 162, 40 176, 44 191 C 46 198, 50 202, 53 196 C 57 187, 56 174, 51 163 C 49 159, 49 155, 48 152 Z"]},{"outer":"M 2 162 C 14 168, 17 185, 19 201 C 21 214, 30 221, 44 222 L 43 234 C 24 234, 10 223, 7 203 C 5 189, 4 177, -2 171 Z","holes":[]},{"outer":"M 76 172 C 86 190, 80 219, 62 234 L 54 224 C 67 213, 72 192, 65 177 Z","holes":[]}]},{"id":"sym_wave","order":3,"color":"#001E60","solids":[{"outer":"M 114 200 C 127 200, 129 183, 134 166 C 143 137, 183 136, 194 166 L 185 173 C 174 168, 169 180, 175 192 C 179 199, 188 200, 202 200 L 202 213 C 182 213, 169 209, 163 196 C 156 180, 162 161, 174 157 C 164 150, 150 155, 145 172 C 140 190, 136 213, 114 213 Z","holes":[]},{"outer":"M 144 206 C 144 191, 147 179, 155 171 L 164 179 C 158 185, 156 194, 156 206 Z","holes":[]},{"outer":"M 114 223 L 203 223 L 203 236 L 114 236 Z","holes":[]}]},{"id":"let_s","order":4,"color":"#001E60","solids":[{"outer":"M 380 48 C 363 43, 344 41, 326 41 C 293 41, 272 59, 272 86 C 272 115, 294 127, 327 136 C 350 142, 359 149, 359 162 C 359 176, 345 184, 323 184 C 305 184, 286 180, 271 174 L 269 201 C 286 206, 307 209, 326 209 C 366 209, 392 191, 392 159 C 392 130, 372 117, 338 108 C 314 101, 304 95, 304 83 C 304 71, 315 64, 334 64 C 350 64, 366 67, 378 72 Z","holes":[]}]},{"id":"let_e1","order":5,"color":"#001E60","solids":[{"outer":"M 547 133 C 548 125, 549 116, 549 108 C 549 65, 523 41, 482 41 C 437 41, 409 73, 409 125 C 409 179, 439 209, 489 209 C 509 209, 528 206, 543 200 L 541 175 C 526 181, 510 184, 493 184 C 461 184, 443 167, 442 133 L 547 133 Z","holes":["M 443 109 C 445 81, 460 64, 482 64 C 504 64, 517 80, 517 109 L 443 109 Z"]}]},{"id":"let_n","order":6,"color":"#001E60","solids":[{"outer":"M 573 51 L 573 206 L 607 206 L 607 82 C 621 71, 638 66, 653 66 C 674 66, 684 78, 684 104 L 684 206 L 718 206 L 718 96 C 718 59, 699 41, 665 41 C 640 41, 619 49, 604 62 L 601 44 L 573 51 Z","holes":[]}]},{"id":"let_e2","order":7,"color":"#001E60","solids":[{"outer":"M 879 133 C 880 125, 881 116, 881 108 C 881 65, 855 41, 814 41 C 769 41, 741 73, 741 125 C 741 179, 771 209, 821 209 C 841 209, 860 206, 875 200 L 873 175 C 858 181, 842 184, 825 184 C 793 184, 775 167, 774 133 L 879 133 Z","holes":["M 775 109 C 777 81, 792 64, 814 64 C 836 64, 849 80, 849 109 L 775 109 Z"]}]},{"id":"let_r","order":8,"color":"#001E60","solids":[{"outer":"M 906 51 L 906 206 L 940 206 L 940 87 C 951 74, 967 68, 984 68 C 989 68, 993 69, 996 70 L 996 42 C 991 41, 986 41, 980 41 C 961 41, 946 49, 936 64 L 933 44 L 906 51 Z","holes":[]}]}];
+const container = document.getElementById('sener-3d-embed');
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(36, container.clientWidth / container.clientHeight, 1, 5000);
+camera.position.set(0, 10, 840);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+container.appendChild(renderer.domElement);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0, -15, 0);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+const dirLight = new THREE.DirectionalLight(0xffffff, 2.3);
+dirLight.position.set(240, 420, 460);
+scene.add(dirLight);
+const fillLight = new THREE.DirectionalLight(0x93c5fd, 1.15);
+fillLight.position.set(-340, 140, 280);
+scene.add(fillLight);
+
+const root = new THREE.Group();
+scene.add(root);
+const nodes = [];
+const SCALE = 0.62;
+const svgLoader = new SVGLoader();
+
+function makeMat(hex) {
+    if (CFG.materialPreset === 'cap_check') {
+        return [
+            new THREE.MeshPhysicalMaterial({ color: 0x10b981, side: THREE.FrontSide, roughness: 0.2, metalness: 0.1, clearcoat: 0.8 }),
+            new THREE.MeshPhysicalMaterial({ color: 0x001e60, side: THREE.FrontSide, roughness: 0.25, metalness: 0.2, clearcoat: 0.5 })
+        ];
+    }
+    return new THREE.MeshPhysicalMaterial({
+        color: hex,
+        side: THREE.FrontSide,
+        roughness: CFG.materialPreset === 'anodized' ? 0.16 : 0.24,
+        metalness: CFG.materialPreset === 'anodized' ? 0.80 : 0.15,
+        clearcoat: 0.65,
+        clearcoatRoughness: 0.14
+    });
+}
+
+const matText = makeMat(CFG.extraTextColor);
+
+// Universal contour converter supporting both SVG path strings and vectorized [x,y] point arrays
+function convertContourToCleanVector2(contourInput, sampleDivisions, scale) {
+    let rawPts = [];
+    if (typeof contourInput === 'string') {
+        const parsed = svgLoader.parse('<svg xmlns="http://www.w3.org/2000/svg"><path d="' + contourInput + '"/></svg>');
+        if (parsed.paths.length && parsed.paths[0].subPaths.length) {
+            rawPts = parsed.paths[0].subPaths[0].getPoints(sampleDivisions);
+        }
+    } else if (Array.isArray(contourInput)) {
+        rawPts = contourInput.map(pt => Array.isArray(pt) ? { x: pt[0], y: pt[1] } : pt);
+    }
+    const cleaned = [];
+    const eps = 1e-4;
+    for (let i = 0; i < rawPts.length; i++) {
+        const pt = new THREE.Vector2(rawPts[i].x * scale, -rawPts[i].y * scale);
+        if (!cleaned.length || pt.distanceTo(cleaned[cleaned.length - 1]) > eps) cleaned.push(pt);
+    }
+    if (cleaned.length > 2 && cleaned[0].distanceTo(cleaned[cleaned.length - 1]) <= eps) cleaned.pop();
+    return cleaned;
+}
+
+function buildItemSolidShapes(item) {
+    const shapes = [];
+    item.solids.forEach(sDef => {
+        const outerPts = convertContourToCleanVector2(sDef.outer, CFG.curveSegments, SCALE);
+        if (outerPts.length < 3) return;
+        if (THREE.ShapeUtils.isClockWise(outerPts)) outerPts.reverse();
+        const shape = new THREE.Shape(outerPts);
+        shape.closePath();
+        (sDef.holes || []).forEach(hDef => {
+            const hPts = convertContourToCleanVector2(hDef, CFG.curveSegments, SCALE);
+            if (hPts.length >= 3) {
+                if (!THREE.ShapeUtils.isClockWise(hPts)) hPts.reverse();
+                const hp = new THREE.Path(hPts);
+                hp.closePath();
+                shape.holes.push(hp);
+            }
+        });
+        shapes.push(shape);
+    });
+    return shapes;
+}
+
+const extSettings = {
+    depth: CFG.depth * SCALE,
+    bevelEnabled: CFG.bevelThickness > 0 && CFG.bevelSize > 0,
+    bevelThickness: CFG.bevelThickness * SCALE,
+    bevelSize: CFG.bevelSize * SCALE,
+    bevelOffset: 0,
+    bevelSegments: Math.max(4, Math.round(CFG.curveSegments / 8)),
+    curveSegments: CFG.curveSegments
+};
+
+ELEMENTS.forEach((item, idx) => {
+    const shapes = buildItemSolidShapes(item);
+    if (!shapes.length) return;
+    let geom = new THREE.ExtrudeGeometry(shapes, extSettings);
+    geom = BufferGeometryUtils.mergeVertices(geom, 1e-3);
+    geom.computeBoundingBox();
+    const center = new THREE.Vector3();
+    geom.boundingBox.getCenter(center);
+    const home = new THREE.Vector3(center.x - 500 * SCALE, center.y + 117.5 * SCALE + (CFG.logoOffsetY || 0), 0);
+    geom.translate(-center.x, -center.y, -center.z);
+    geom.computeVertexNormals();
+
+    const itemHex = (CFG.useSampledColors && item.color) ? item.color : CFG.baseColor;
+    const grp = new THREE.Group();
+    grp.add(new THREE.Mesh(geom, makeMat(itemHex)));
+    grp.position.copy(home);
+    root.add(grp);
+    nodes.push({ group: grp, home: home, homeRotZ: 0, idx: idx, yOff: (420 + idx * 32) * CFG.animAmp, vy: 0, rotZ: (idx % 2 === 0 ? 1 : -1) * 0.32 * CFG.animAmp, sx: 1, sy: 1, delay: idx * 0.08, settled: false });
+});
+
+function computeCurvedTextTransform(charLinearX, totalLinearSpan, baseTargetY, curveMode, radius) {
+    const R = Math.max(40, radius || 260);
+    if (curveMode === 'arc_convex') {
+        const theta = charLinearX / R;
+        return { x: R * Math.sin(theta), y: baseTargetY - R * (1 - Math.cos(theta)), rotZ: -theta };
+    } else if (curveMode === 'arc_concave') {
+        const theta = charLinearX / R;
+        return { x: R * Math.sin(theta), y: baseTargetY + R * (1 - Math.cos(theta)), rotZ: theta };
+    } else if (curveMode === 'circle') {
+        const shiftedX = charLinearX + totalLinearSpan * 0.5;
+        const theta = (shiftedX / Math.max(1, totalLinearSpan)) * Math.PI * 2;
+        return { x: R * Math.sin(theta), y: baseTargetY + R * Math.cos(theta), rotZ: -theta };
+    }
+    return { x: charLinearX, y: baseTargetY, rotZ: 0 };
+}
+
+if (CFG.extraTextPos !== 'none' && CFG.extraText.trim().length > 0) {
+    new FontLoader().load('https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json', (font) => {
+        const raw = CFG.extraText.trim();
+        const deletedSet = new Set(CFG.deletedCharIndices || []);
+        const chars = [];
+        let cx = 0;
+        for (let i = 0; i < raw.length; i++) {
+            if (raw[i] === ' ') { cx += CFG.extraTextSize * 0.45 + CFG.extraTextSpacing; continue; }
+            const g = new TextGeometry(raw[i], {
+                font,
+                size: CFG.extraTextSize,
+                height: Math.max(4, CFG.depth * 0.65 * SCALE),
+                curveSegments: Math.max(8, Math.round(CFG.curveSegments / 4)),
+                bevelEnabled: CFG.bevelThickness > 0 && CFG.bevelSize > 0,
+                bevelThickness: Math.min(2.2, CFG.bevelThickness * 0.55 * SCALE),
+                bevelSize: Math.min(1.5, CFG.bevelSize * 0.55 * SCALE),
+                bevelSegments: 4
+            });
+            g.computeBoundingBox();
+            const w = Math.max(CFG.extraTextSize * 0.25, g.boundingBox.max.x - g.boundingBox.min.x);
+            if (!deletedSet.has(i)) {
+                chars.push({ g, box: g.boundingBox.clone(), x: cx, w });
+            } else {
+                g.dispose();
+            }
+            cx += w + CFG.extraTextSpacing;
+        }
+        const totalTextWidth = cx - CFG.extraTextSpacing;
+        const circleSpanWidth = cx + CFG.extraTextSize * 0.65;
+        const startX = -totalTextWidth * 0.5;
+        const ty = CFG.extraTextPos === 'above' ? CFG.extraTextOffsetY : -CFG.extraTextOffsetY;
+        const baseCount = ELEMENTS.length;
+        chars.forEach((c, ci) => {
+            const ctr = new THREE.Vector3();
+            c.box.getCenter(ctr);
+            c.g.translate(-ctr.x, -ctr.y, -ctr.z);
+            const welded = BufferGeometryUtils.mergeVertices(c.g, 1e-3);
+            welded.computeVertexNormals();
+            const grp = new THREE.Group();
+            grp.add(new THREE.Mesh(welded, matText));
+            const linearX = startX + c.x + c.w * 0.5;
+            const tf = computeCurvedTextTransform(
+                linearX,
+                CFG.extraTextCurve === 'circle' ? circleSpanWidth : totalTextWidth,
+                ty,
+                CFG.extraTextCurve || 'straight',
+                CFG.extraTextRadius || 260
+            );
+            const home = new THREE.Vector3(tf.x, tf.y, 0);
+            grp.position.copy(home);
+            grp.rotation.set(0, 0, tf.rotZ);
+            root.add(grp);
+            const idx = baseCount + ci;
+            nodes.push({ group: grp, home, homeRotZ: tf.rotZ, idx, yOff: (420 + idx * 32) * CFG.animAmp, vy: 0, rotZ: (idx % 2 === 0 ? 1 : -1) * 0.32 * CFG.animAmp, sx: 1, sy: 1, delay: idx * 0.065, settled: false });
+        });
+    });
+}
+
+let t0 = performance.now() * 0.001;
+let last = t0;
+
+function resetWidgetAnimation() {
+    t0 = performance.now() * 0.001;
+    const stagger = nodes.length > 14 ? 0.065 : 0.10;
+    nodes.forEach((n, i) => {
+        n.idx = i;
+        n.yOff = (420 + i * 32) * CFG.animAmp;
+        n.vy = 0;
+        n.rotZ = (i % 2 === 0 ? 1 : -1) * 0.32 * CFG.animAmp;
+        n.sx = 1;
+        n.sy = 1;
+        n.delay = i * stagger;
+        n.settled = false;
+        n.group.position.copy(n.home);
+        n.group.rotation.set(0, 0, n.homeRotZ || 0);
+        n.group.scale.set(1, 1, 1);
+    });
+}
+
+const animSelectEl = document.getElementById('sener-3d-anim-select');
+const animReplayEl = document.getElementById('sener-3d-anim-replay');
+if (animSelectEl) {
+    animSelectEl.addEventListener('change', (e) => {
+        CFG.animMode = e.target.value;
+        resetWidgetAnimation();
+    });
+}
+if (animReplayEl) {
+    animReplayEl.addEventListener('click', () => {
+        resetWidgetAnimation();
+    });
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    const now = performance.now() * 0.001;
+    const dt = Math.min(0.05, now - last);
+    last = now;
+    const speed = CFG.animSpeed;
+    const amp = CFG.animAmp;
+    const elapsed = (now - t0) * speed;
+
+    nodes.forEach(n => {
+        const home = n.home;
+        const baseRotZ = n.homeRotZ || 0;
+        const idx = n.idx;
+        switch (CFG.animMode) {
+            case 'static':
+                n.group.position.copy(home);
+                n.group.rotation.set(0, 0, baseRotZ);
+                n.group.scale.set(1, 1, 1);
+                break;
+            case 'bouncy':
+                if (elapsed < n.delay) { n.group.scale.setScalar(0.001); return; }
+                if (!n.settled) {
+                    n.vy -= 1850 * amp * dt * speed;
+                    n.yOff += n.vy * dt * speed;
+                    if (n.yOff <= 0) {
+                        n.yOff = 0;
+                        if (Math.abs(n.vy) > 50) { n.vy = -n.vy * 0.62; n.rotZ = -n.rotZ * 0.48; n.sx = 1.28; n.sy = 0.76; }
+                        else { n.vy = 0; n.rotZ = 0; n.settled = true; }
+                    }
+                }
+                n.sx += (1 - n.sx) * Math.min(1, dt * 15 * speed);
+                n.sy += (1 - n.sy) * Math.min(1, dt * 15 * speed);
+                n.rotZ += (0 - n.rotZ) * Math.min(1, dt * 7 * speed);
+                n.group.position.set(home.x, home.y + n.yOff, home.z);
+                n.group.rotation.set(0, 0, baseRotZ + n.rotZ);
+                n.group.scale.set(n.sx, n.sy, 1);
+                break;
+            case 'wave': {
+                const ph = now * 3.2 * speed - idx * 0.42;
+                n.group.position.set(home.x, home.y + Math.cos(ph) * 14 * amp, home.z + Math.sin(ph) * 42 * amp);
+                n.group.rotation.set(Math.sin(ph) * 0.08 * amp, Math.cos(ph) * 0.24 * amp, baseRotZ);
+                break;
+            }
+            case 'magnetic': {
+                const cyc = Math.min(1, Math.max(0, (elapsed - n.delay) * 0.9));
+                const ease = 1 - Math.pow(1 - cyc, 4);
+                const sp = (1 - ease) * 380 * amp;
+                const ang = idx * 1.9;
+                n.group.position.set(home.x + Math.cos(ang) * sp, home.y + Math.sin(ang) * sp, home.z + Math.sin(ang * 2) * sp * 0.8);
+                n.group.rotation.set((1 - ease) * 2.2, (1 - ease) * -1.8, baseRotZ + (1 - ease) * 1.4);
+                n.group.scale.setScalar(Math.max(0.01, ease));
+                break;
+            }
+            case 'domino': {
+                const lt = Math.max(0, (elapsed - n.delay) * 1.8) % 4.5;
+                const flip = lt < Math.PI ? (1 - Math.cos(lt)) * Math.PI : 0;
+                n.group.position.set(home.x, home.y, home.z + (lt < Math.PI ? Math.sin(lt) * 35 * amp : 0));
+                n.group.rotation.set(0, flip, baseRotZ);
+                break;
+            }
+            case 'jelly': {
+                const t = now * 4.2 * speed - idx * 0.35;
+                const sx = 1 + Math.sin(t) * 0.22 * amp * Math.exp(-((t % (Math.PI * 2)) * 0.3));
+                const sy = 1 - Math.sin(t) * 0.18 * amp * Math.exp(-((t % (Math.PI * 2)) * 0.3));
+                n.group.position.set(home.x, home.y + Math.max(0, Math.sin(t)) * 18 * amp, home.z);
+                n.group.rotation.set(0, 0, baseRotZ + Math.cos(t) * 0.08 * amp);
+                n.group.scale.set(sx, sy, 1);
+                break;
+            }
+            case 'vortex': {
+                const t = Math.max(0, elapsed - n.delay * 0.6);
+                const dec = Math.exp(-t * 1.25);
+                const th = t * 5.5 - idx * 0.5;
+                const rad = 320 * amp * dec;
+                n.group.position.set(home.x + Math.cos(th) * rad, home.y + Math.sin(th) * rad, home.z + Math.sin(th * 2) * 140 * dec);
+                n.group.rotation.set(dec * 2, dec * 3, baseRotZ + th * dec);
+                n.group.scale.setScalar(1 - dec * 0.7);
+                break;
+            }
+            case 'typewriter': {
+                const t = elapsed - n.delay * 1.1;
+                if (t <= 0) { n.group.scale.setScalar(0.001); }
+                else {
+                    const s = 1 + Math.exp(-t * 6) * Math.sin(t * 18) * 0.45 * amp;
+                    n.group.position.set(home.x, home.y, home.z + Math.exp(-t * 5) * 45 * amp);
+                    n.group.rotation.set(0, 0, baseRotZ);
+                    n.group.scale.setScalar(s);
+                }
+                break;
+            }
+            case 'zerog': {
+                const t = now * 1.4 * speed + idx * 1.7;
+                n.group.position.set(home.x + Math.sin(t * 0.9) * 14 * amp, home.y + Math.cos(t * 1.3) * 18 * amp, home.z + Math.sin(t * 1.1) * 28 * amp);
+                n.group.rotation.set(Math.sin(t * 0.7) * 0.16 * amp, Math.cos(t * 0.8) * 0.22 * amp, baseRotZ + Math.sin(t * 0.5) * 0.12 * amp);
+                break;
+            }
+            case 'pulse': {
+                const wp = ((now * 3.8 * speed) % 16) - 2;
+                const b = Math.max(0, 1 - Math.abs(idx - wp) * 0.45);
+                n.group.position.set(home.x, home.y, home.z + b * 42 * amp);
+                n.group.rotation.set(-b * 0.18, 0, baseRotZ);
+                n.group.scale.set(1 + b * 0.28 * amp, 1 + b * 0.28 * amp, 1 + b * 0.4);
+                break;
+            }
+            case 'origami': {
+                const t = Math.min(1, Math.max(0, (elapsed - n.delay) * 1.2));
+                const ease = 1 - Math.pow(1 - t, 3);
+                n.group.position.set(home.x, home.y - (1 - ease) * 45 * amp, home.z);
+                n.group.rotation.set((1 - ease) * Math.PI * 0.95, (1 - ease) * 0.6, baseRotZ);
+                n.group.scale.setScalar(Math.max(0.01, ease));
+                break;
+            }
+            case 'pendulum': {
+                const sw = Math.sin(now * 2.8 * speed - idx * 0.22) * 0.45 * amp;
+                n.group.position.set(home.x + Math.sin(sw) * 65, home.y - (1 - Math.cos(sw)) * 32.5, home.z + Math.cos(sw) * 18 * amp);
+                n.group.rotation.set(0, 0, baseRotZ + sw * 0.65);
+                break;
+            }
+        }
+    });
+    controls.update();
+    renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+});
+</script>
+</body>
+</html>
